@@ -43,36 +43,71 @@ window.addEventListener('beforeunload', (e) => {
   let isBgmEnabled = true;
   let targetBgmVolume = 0.42;
 
-  const bgmPlaylist = {
-    // 🎵 지금은 동화마을 곡을 빌려 씁니다. 수노로 어른 동화 곡을 만들면 assets/bgm/ 파일만 바꾸면 돼요.
-    "comfort": { name: "Moonlit Forest Path", url: "./assets/bgm/moonlit-forest-path.mp3" },
-    "humor": { name: "Pudding Parade", url: "./assets/bgm/pudding-parade.mp3" },
-    "fantasy": { name: "Starry Night Journey", url: "./assets/bgm/starry-night-journey.mp3" },
-    "daily": { name: "Sunny Trail", url: "./assets/bgm/sunny-bunny-trail.mp3" },
-    "fable": { name: "The Secret in the Box", url: "./assets/bgm/the-secret-in-the-box.mp3" },
-    "bedtime": { name: "Moonlit Pillow Song", url: "./assets/bgm/moonlit-pillow-song.mp3" },
-    "custom": { name: "Moonlit Forest Path", url: "./assets/bgm/moonlit-forest-path.mp3" }
+  const BGM_TRACKS = {
+    // 🎵 선생님이 국어 시낭송용으로 만든 곡(2026-10-06 가져옴). 파일은 assets/bgm/<이름>.mp3
+    'waltz-of-comfort':    { name: '위로의 왈츠 (피아노 & 바이올린)', url: './assets/bgm/waltz-of-comfort.mp3', mood: 'warm' },
+    'clarinet-twilight':   { name: '클라리넷과 피아노의 포근한 황혼', url: './assets/bgm/clarinet-twilight.mp3', mood: 'warm' },
+    'cello-piano-dialogue':{ name: '첼로와 피아노의 깊은 대화', url: './assets/bgm/cello-piano-dialogue.mp3', mood: 'calm' },
+    'sunset-strings':      { name: '노을빛 회상과 현악 앙상블', url: './assets/bgm/sunset-strings.mp3', mood: 'warm' },
+    'music-box-memory':    { name: '기억 속의 아련한 오르골', url: './assets/bgm/music-box-memory.mp3', mood: 'calm' },
+    'lofi-reflection':     { name: '따뜻한 로파이 질감의 사색', url: './assets/bgm/lofi-reflection.mp3', mood: 'bright' },
+    'spring-piano':        { name: '잔잔한 피아노와 봄날의 햇살', url: './assets/bgm/spring-piano.mp3', mood: 'bright' },
+    'morning-dew-harp':    { name: '아침 이슬과 맑은 하프 선율', url: './assets/bgm/morning-dew-harp.mp3', mood: 'bright' },
+    'seaside-breeze':      { name: '바닷가 언덕과 산들바람', url: './assets/bgm/seaside-breeze.mp3', mood: 'bright' },
+    'starry-night-dream':  { name: '별이 빛나는 밤의 몽환적인 멜로디', url: './assets/bgm/starry-night-dream.mp3', mood: 'calm' },
+    'moonlight-daegeum':   { name: '달빛 아래 대금과 피아노', url: './assets/bgm/moonlight-daegeum.mp3', mood: 'calm' },
+    'vast-land-epic':      { name: '대자연과 넓은 대지의 서사', url: './assets/bgm/vast-land-epic.mp3', mood: 'warm' },
+    'quiet-forest-flute':  { name: '고요한 숲과 은은한 플루트', url: './assets/bgm/quiet-forest-flute.mp3', mood: 'calm' },
+    'haegeum-guitar':      { name: '바람에 흔들리는 해금과 잔잔한 기타', url: './assets/bgm/haegeum-guitar.mp3', mood: 'calm' },
+    'rainy-window-guitar': { name: '비 내리는 창가와 어쿠스틱 기타', url: './assets/bgm/rainy-window-guitar.mp3', mood: 'calm' },
+    'felt-piano':          { name: '미니멀리즘 펠트 피아노', url: './assets/bgm/felt-piano.mp3', mood: 'calm' },
+    'dawn-ambient':        { name: '새벽의 고독과 앰비언트 사운드', url: './assets/bgm/dawn-ambient.mp3', mood: 'dark' },
+    'before-storm':        { name: '폭풍 전의 침묵과 다크 앰비언트', url: './assets/bgm/before-storm.mp3', mood: 'dark' },
+    'cello-fate':          { name: '격정적인 운명과 첼로 독주', url: './assets/bgm/cello-fate.mp3', mood: 'dark' }
   };
+  // 장르마다 어울리는 곡 묶음 — 동화마다 이 중 한 곡을 골라 동화에 기억(bgmKey)해 두고, 다시 들을 때도 같은 곡
+  const BGM_POOLS = {
+    comfort: ['waltz-of-comfort', 'clarinet-twilight', 'cello-piano-dialogue', 'sunset-strings', 'music-box-memory', 'rainy-window-guitar', 'dawn-ambient'],
+    humor:   ['lofi-reflection', 'spring-piano', 'morning-dew-harp', 'seaside-breeze'],
+    fantasy: ['starry-night-dream', 'moonlight-daegeum', 'quiet-forest-flute', 'haegeum-guitar', 'vast-land-epic'],
+    daily:   ['rainy-window-guitar', 'lofi-reflection', 'spring-piano', 'seaside-breeze', 'morning-dew-harp', 'haegeum-guitar'],
+    fable:   ['felt-piano', 'music-box-memory', 'quiet-forest-flute', 'cello-fate', 'before-storm']
+  };
+  function pickBgmKey(genreKey, seedText, moodKey) {
+    let pool = (BGM_POOLS[genreKey] || BGM_POOLS.comfort).slice();
+    // 나누고 싶은(밝은) 마음이면 어두운 곡은 빼요
+    if (moodKey && typeof adultMoodIsBright === 'function' && adultMoodIsBright(moodKey)) {
+      const lighter = pool.filter(k => BGM_TRACKS[k].mood !== 'dark');
+      if (lighter.length) pool = lighter;
+    }
+    const seed = String(seedText || '') + Date.now();
+    let h = 0; for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return pool[h % pool.length];
+  }
+  function bgmKeyForBook(book, genreKey) {
+    if (book && BGM_TRACKS[book.bgmKey]) return book.bgmKey;
+    // 예전 동화·명작: 제목으로 늘 같은 곡이 되게
+    const pool = BGM_POOLS[genreKey] || BGM_POOLS.comfort;
+    let h = 0; for (const ch of String(book?.title || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return pool[h % pool.length];
+  }
+  const bgmPlaylist = { custom: BGM_TRACKS['waltz-of-comfort'] }; // 예전 이름 호환
 
   function getCurrentBgmSelection() {
     // 🎵 제작자가 이 동화에 넣은 곡이 있으면 그 곡을 씁니다
     const custom = typeof window.getCustomBgmData === 'function' ? window.getCustomBgmData(currentStoryBookObject) : null;
     if (custom) return { key: 'custom', data: custom, volume: targetBgmVolume };
 
-    const actingStyle = document.getElementById('actingStyle')?.value || 'dynamic_theater';
-    if (actingStyle === 'bedtime_calm') {
-      return { key: 'bedtime', data: bgmPlaylist.bedtime, volume: 0.34 };
-    }
-
+    const actingStyle = document.getElementById('actingStyle')?.value || 'bedtime_calm';
     const genreEl = document.getElementById('storyGenre');
     const genreKey =
       (currentStoryBookObject && currentStoryBookObject.genre) ||
       (genreEl ? genreEl.value : 'comfort');
-
+    const key = currentStoryBookObject ? bgmKeyForBook(currentStoryBookObject, genreKey) : (BGM_POOLS[genreKey] || BGM_POOLS.comfort)[0];
     return {
-      key: genreKey,
-      data: bgmPlaylist[genreKey] || bgmPlaylist.comfort,
-      volume: targetBgmVolume
+      key,
+      data: BGM_TRACKS[key] || BGM_TRACKS['waltz-of-comfort'],
+      volume: actingStyle === 'bedtime_calm' ? Math.min(targetBgmVolume, 0.34) : targetBgmVolume // 🌙 차분한 밤 낭독은 음악을 조금 작게
     };
   }
 
@@ -334,6 +369,7 @@ currentStoryBookObject = {
         storyTheme: selectedStoryTheme || '',
         mood: { mood: adultSel.mood, place: adultSel.place, hero: adultSel.hero }, // 고른 마음만 저장(하루 이야기는 저장 안 함)
         closingQuestion: String(storyData.closing_question || '').slice(0, 120),
+        bgmKey: pickBgmKey(genreKey, storyData.title, adultSel.mood), // 🎵 이 동화의 배경음악(다시 들을 때도 같은 곡)
         reflection: '',
         characterSheet: normalizeCharacterSheet(storyData.character_sheet),
         createdAt: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
@@ -1195,6 +1231,7 @@ currentStoryBookObject = {
     if (typeof window.updateLibraryBookBar === 'function') window.updateLibraryBookBar();
     if (typeof window.renderClosingBox === 'function') window.renderClosingBox(book);
     updateMissingImageButton();
+    try { const t = document.getElementById('bgmTitleText'); if (t) t.innerText = `배경음악: ${getCurrentBgmSelection().data.name}`; } catch (e) {}
   }
 
   function showPage(index) {

@@ -1,12 +1,9 @@
-const CACHE_NAME='eoreuni-story-v8';
+const CACHE_NAME='eoreuni-story-v9';
 const APP_SHELL=[
   './','./index.html','./manifest.webmanifest','./css/styles.css','./css/mobile-fix.css','./css/night.css',
   './js/app.js','./js/ai-voice.js','./js/recorder.js','./js/creator-config.js','./js/creator.js','./js/creator-music.js','./js/muni-library.js','./js/hud.js','./js/eaim-auto-recorder.js','./js/reels.js','./js/vendor/jszip.min.js','./js/pwa.js','./js/adult-story.js','./js/language.js','./js/firebase-sync.js',
-  './assets/guide.png','./assets/guide-listen.png','./icons/icon-192.png','./icons/icon-512.png',
-  './assets/bgm/moonlit-forest-path.mp3','./assets/bgm/little-brave-hero.mp3',
-  './assets/bgm/the-secret-in-the-box.mp3','./assets/bgm/starry-night-journey.mp3',
-  './assets/bgm/sunny-bunny-trail.mp3','./assets/bgm/pudding-parade.mp3',
-  './assets/bgm/moonlit-pillow-song.mp3'
+  './assets/guide.png','./assets/guide-listen.png','./icons/icon-192.png','./icons/icon-512.png'
+  // 🎵 배경음악(약 60MB)은 미리 받지 않고, 들을 때 받아서 저장해요
 ];
 
 self.addEventListener('install', event=>{
