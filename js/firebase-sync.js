@@ -1,8 +1,7 @@
-// 어른이 동화마을 클라우드 마음 서재 (v1.0, 2026-10-06)
-// Firebase 프로젝트는 어른이 동화마을과 같은 eaim-kids 를 함께 쓰되, 저장 자리는 따로 둡니다.
-//   마음 서재: eoreuniUsers/{uid}/stories/...   (동화마을 users/{uid} 와 섞이지 않음)
-//   무료체험:  eoreuniTrials/{uid}               (동화마을 trials/{uid} 와 따로 셈)
-// 나중에 새 Firebase 프로젝트로 옮길 때는 아래 firebaseConfig 값만 바꾸면 됩니다.
+// 어른이 동화마을 클라우드 마음 서재 (v1.1, 2026-10-06)
+// Firebase 프로젝트: eaim-eoreuni (어른이 동화마을 전용 — 뮤니의 동화마을 eaim-kids 와 완전히 따로)
+//   마음 서재: eoreuniUsers/{uid}/stories/...   (본인만 읽고 쓰기 — firestore.rules.txt)
+//   무료체험:  eoreuniTrials/{uid}               (api/fairytale-trial.js 와 짝)
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
@@ -12,13 +11,12 @@ import {
 } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyAwSabP_h6tgda5BXiMsnhJ3ntByvEIIm0',
-  authDomain: 'eaim-kids.firebaseapp.com',
-  projectId: 'eaim-kids',
-  storageBucket: 'eaim-kids.firebasestorage.app',
-  messagingSenderId: '656562937142',
-  appId: '1:656562937142:web:11052353276cefe7446797',
-  measurementId: 'G-EKLB29CBVW'
+  apiKey: 'AIzaSyA4ZlWmeKXF3ojR2e_kegnWy5mwuWAJVHM',
+  authDomain: 'eaim-eoreuni.firebaseapp.com',
+  projectId: 'eaim-eoreuni',
+  storageBucket: 'eaim-eoreuni.firebasestorage.app',
+  messagingSenderId: '207221758650',
+  appId: '1:207221758650:web:00723df8ac54ee9e288083'
 };
 
 const app = initializeApp(firebaseConfig);

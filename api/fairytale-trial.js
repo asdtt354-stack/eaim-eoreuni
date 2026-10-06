@@ -1,5 +1,5 @@
 // api/fairytale-trial.js — 어른이 동화마을 무료체험 중계 함수 (v1.0, 2026-10-06 — 뮤니의 동화마을 v1.1 을 복사)
-// ※ 이용권은 eoreuniTrials/{uid} 에 셉니다(동화마을 trials/{uid} 와 따로). 환경변수 이름은 동화마을과 같지만 이 Vercel 프로젝트에 따로 넣습니다.
+// ※ 이용권은 eoreuniTrials/{uid} 에 셉니다(Firebase 프로젝트 eaim-eoreuni). 환경변수 이름은 동화마을과 같지만 이 Vercel 프로젝트에 따로 넣습니다.
 //
 // 하는 일
 //   - 무료체험 1회분(짧은 동화 1편)을 운영자 키로 대신 만들어 줍니다. 키는 서버 환경변수에만 있습니다.
@@ -12,9 +12,9 @@
 //   FAIRYTALE_TRIAL_KEY        (필수) 운영자 서버용 Gemini 키 — API 제한 + 하루 한도만, 웹사이트 제한 X
 //   FAIRYTALE_TRIAL_UNTIL      (선택) 체험 마감일 예: 2026-12-31  (지나면 체험 닫힘)
 //   FAIRYTALE_ALLOWED_ORIGINS  (선택) 허용 주소, 쉼표 구분. 비우면 "같은 주소에서 온 요청"만 허용
-//   FIREBASE_PROJECT_ID        (선택) 기본값 eaim-kids
+//   FIREBASE_PROJECT_ID        (선택) 기본값 eaim-eoreuni
 
-const PROJECT = process.env.FIREBASE_PROJECT_ID || 'eaim-kids';
+const PROJECT = process.env.FIREBASE_PROJECT_ID || 'eaim-eoreuni';
 const FS_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
 const MODELS = { text: 'gemini-flash-latest', image: 'gemini-3.1-flash-image', tts: 'gemini-2.5-flash-preview-tts' }; // 공통규칙 6-2 (js/app.js, js/ai-voice.js 와 같게)
 const MAX_BODY_CHARS = 3500000; // Vercel 요청 한도(4.5MB)보다 여유 있게
