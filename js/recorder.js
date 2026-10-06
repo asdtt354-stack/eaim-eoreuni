@@ -9,12 +9,15 @@
   let recordedChunks = [];
   let recordedMime = '';
   let isFinishing = false;
-  const INTRO_SRC = './assets/intro/mutoniz-intro.mp4';
+  // 🎁 로고송 인트로: 어른이 동화마을은 지금 쓰지 않아요(2026-10-06 선생님 결정 — 아이용 뮤토니즈 로고송이 밤 분위기와 달라서).
+  //    어른 버전 로고송을 만들면 assets/intro/ 에 파일을 넣고 아래 INTRO_ON 을 true 로 바꾸면 다시 켜져요.
+  const INTRO_ON = false;
+  const INTRO_SRC = './assets/intro/eoreuni-intro.mp4';
   const INTRO_PREF_KEY = 'eoreuni_intro_pref';
 
   function wantIntro() {
     const box = stageEl && stageEl.querySelector('.rec-intro-check');
-    return !!(box && box.checked && document.body.classList.contains('is-creator'));
+    return INTRO_ON && !!(box && box.checked && document.body.classList.contains('is-creator'));
   }
 
   // 🎁 뮤토니즈 인트로(로고송) 재생 — 끝나면(또는 문제가 생기면) 다음으로
@@ -136,7 +139,7 @@
           <div class="rec-ready-box">
             <div class="rec-ready-title">🎬 녹화 준비 완료</div>
             <p class="rec-ready-desc"></p>
-            <label class="rec-intro-opt creator-only"><input type="checkbox" class="rec-intro-check"> 🎁 뮤토니즈 인트로(로고송 5초) 먼저 넣기</label>
+            ${INTRO_ON ? '<label class="rec-intro-opt creator-only"><input type="checkbox" class="rec-intro-check"> 🎁 어른이 동화마을 인트로(로고송) 먼저 넣기</label>' : ''}
             <button type="button" class="rec-start-btn">▶ 시작하기</button>
             <button type="button" class="rec-cancel-btn">취소</button>
           </div>
@@ -153,7 +156,7 @@
       introCheck.onchange = () => { try { localStorage.setItem(INTRO_PREF_KEY, introCheck.checked ? 'on' : 'off'); } catch (e) {} };
     }
     // 인트로 영상을 미리 불러 두기 (시작할 때 바로 재생되게)
-    if (document.body.classList.contains('is-creator')) {
+    if (INTRO_ON && document.body.classList.contains('is-creator')) {
       try { const pre = document.createElement('video'); pre.preload = 'auto'; pre.src = INTRO_SRC; pre.load(); stageEl.__introPre = pre; } catch (e) {}
     }
     $('.rec-start-btn').onclick = beginPlayback;

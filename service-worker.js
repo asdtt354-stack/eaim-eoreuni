@@ -1,4 +1,4 @@
-const CACHE_NAME='eoreuni-story-v2';
+const CACHE_NAME='eoreuni-story-v3';
 const APP_SHELL=[
   './','./index.html','./manifest.webmanifest','./css/styles.css','./css/mobile-fix.css','./css/night.css',
   './js/app.js','./js/ai-voice.js','./js/recorder.js','./js/creator-config.js','./js/creator.js','./js/creator-music.js','./js/muni-library.js','./js/hud.js','./js/eaim-auto-recorder.js','./js/reels.js','./js/vendor/jszip.min.js','./js/pwa.js','./js/adult-story.js','./js/language.js','./js/firebase-sync.js',
