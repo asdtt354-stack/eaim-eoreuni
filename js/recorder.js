@@ -307,7 +307,7 @@
       recordedChunks = [];
       recordedMime = pickMimeType();
       try {
-        mediaRecorder = new MediaRecorder(captureStream, recordedMime ? { mimeType: recordedMime, videoBitsPerSecond: 8000000 } : undefined);
+        mediaRecorder = new MediaRecorder(captureStream, recordedMime ? { mimeType: recordedMime, videoBitsPerSecond: 5000000 } /* 어른이: 8→5Mbps — 낭독이 느려 영상이 길어지므로 메모리를 줄임(크롬 STATUS_BREAKPOINT 대비) */ : undefined);
       } catch (e) {
         mediaRecorder = new MediaRecorder(captureStream);
         recordedMime = mediaRecorder.mimeType || 'video/webm';

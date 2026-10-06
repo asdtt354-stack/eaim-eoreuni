@@ -349,6 +349,7 @@ currentStoryBookObject = {
       if (bookContainer) bookContainer.style.display = 'block';
 
       const characterSheet = normalizeCharacterSheet(storyData.character_sheet);
+      lastImageError = '';
       let firstPageRef = null, lastPageRef = null;
       for (let i = 0; i < storyData.pages.length; i++) {
         const page = storyData.pages[i];
@@ -367,6 +368,7 @@ currentStoryBookObject = {
           }
         } catch (imgErr) {
           console.error(`Page ${i+1} Image Error:`, imgErr);
+          lastImageError = imgErr?.message || String(imgErr);
         }
 
         currentStoryBookObject.pages.push({
@@ -406,6 +408,10 @@ currentStoryBookObject = {
             : `\n💾 마음 서재에 자동으로 저장했어요.${vp && villageVisible() ? (window.EAIMCloud?.getUser?.()
                 ? ` ${vp.emoji} '${vp.name}'이(가) 뮤니마을 재료가 됐어요!`
                 : ` Google 로그인하면 ${vp.emoji} '${vp.name}'이(가) 뮤니마을 재료가 돼요!`) : ''}`);
+      }
+      const missingImgs = currentStoryBookObject.pages.filter(pg => !pg.imageBase64).length;
+      if (missingImgs && statusLog) {
+        statusLog.innerText += `\n🎨 그림 ${missingImgs}장을 그리지 못했어요. 까닭: ${friendlyAiError(lastImageError) || '알 수 없음'}\n아래 [🎨 빠진 그림 다시 그리기]를 눌러 주세요. 글과 목소리는 그대로예요.`;
       }
       if (aiRoute.mode === 'trial') refreshTrialStatus();
       if (controlPanel) controlPanel.style.display = 'flex';
@@ -519,19 +525,76 @@ currentStoryBookObject = {
   }
   window.addEventListener('eaim-auth-changed', () => refreshVillageProgress());
 
+  // 🎨 마지막 그림 오류(빠진 그림 안내용)
+  let lastImageError = '';
+
+  // 🎨 빠진 그림 다시 그리기 — 누구나 쓸 수 있음. 그림이 없는 페이지만 새로 그리고 저장해요(글·목소리는 그대로).
+  async function redrawMissingImages(btn) {
+    const book = currentStoryBookObject;
+    if (!book || !Array.isArray(book.pages) || book.isLibraryBook) return;
+    const todo = book.pages.map((p, i) => i).filter(i => !book.pages[i].imageBase64);
+    if (!todo.length) { alert('빠진 그림이 없어요.'); updateMissingImageButton(); return; }
+    const apiKey = (document.getElementById('apiKey')?.value || '').trim();
+    let aiRoute;
+    if (apiKey && apiKey.length >= 5) aiRoute = { mode: 'key', apiKey };
+    else {
+      const trial = await checkTrialReady();
+      if (!trial.ok) { alert(trial.message); return; }
+      aiRoute = { mode: 'trial' };
+    }
+    const statusLog = document.getElementById('status-log');
+    if (btn) btn.disabled = true;
+    let ok = 0; lastImageError = '';
+    const style = (genreGuides[book.genre] || genreGuides.custom).artStyle;
+    for (const i of todo) {
+      if (statusLog) statusLog.innerText = `🎨 ${i + 1}페이지 그림을 다시 그리는 중... (${todo.indexOf(i) + 1}/${todo.length})`;
+      const page = book.pages[i];
+      const plain = String(page.full_text || (page.dialogue_list || []).map(d => d.text).join(' ')).replace(/[\n\r]+/g, ' ');
+      const prompt = page.image_prompt || `Illustrate the single most important moment of this page of the story "${book.title}". The page text is in Korean and is given only so you understand the scene — never write it in the picture: ${plain} Art style: ${style}`;
+      const refs = [];
+      for (const k of [0, i - 1, i + 1]) {
+        if (k < 0 || !book.pages[k] || !book.pages[k].imageBase64 || refs.some(r => r._k === k)) continue;
+        const r = await shrinkImageForRef(book.pages[k].imageBase64);
+        if (r) { r._k = k; refs.push(r); }
+      }
+      try {
+        const img = await generateGeminiImage(aiRoute, prompt, [], { sheet: book.characterSheet || [], refs });
+        if (img) { page.imageBase64 = img; ok++; }
+      } catch (e) { console.error('redraw missing', i, e); lastImageError = e?.message || String(e); }
+    }
+    renderBookPages(book); showPage(todo[0] || 0);
+    if (ok) { storyUnsaved = true; await saveCurrentStoryToDB({ silent: true }); }
+    const left = book.pages.filter(pg => !pg.imageBase64).length;
+    if (statusLog) statusLog.innerText = left
+      ? `🎨 ${ok}장을 그렸고 ${left}장은 아직이에요. 까닭: ${friendlyAiError(lastImageError) || '알 수 없음'}`
+      : `✅ 빠진 그림 ${ok}장을 모두 그려서 마음 서재에 저장했어요.`;
+    if (btn) btn.disabled = false;
+  }
+  window.redrawMissingImages = redrawMissingImages;
+
+  function updateMissingImageButton() {
+    const btn = document.getElementById('redrawMissingBtn');
+    if (!btn) return;
+    const book = currentStoryBookObject;
+    const n = book && !book.isLibraryBook && Array.isArray(book.pages) ? book.pages.filter(pg => !pg.imageBase64).length : 0;
+    btn.style.display = n ? '' : 'none';
+    btn.textContent = `🎨 빠진 그림 다시 그리기 (${n}장)`;
+  }
+
   // 🤖 --- AI 호출 창구 (내 키 / 무료체험) ---
   // 모델 이름은 공통규칙 6-2 기준. 무료체험은 서버(api/fairytale-trial.js)가 같은 모델을 씁니다.
   const AI_MODELS = { text: 'gemini-flash-latest', image: 'gemini-3.1-flash-image' };
   let trialConfigCache = null;
 
-  // 🔁 구글 AI가 붐빌 때(503·429) 기다렸다가 다시 시도 — 3초 → 8초 → 15초 (총 4번)
+  // 🔁 구글 AI가 붐빌 때(503·500) 기다렸다가 다시 시도 — 3초 → 8초 → 15초 (총 4번)
+  //    429(한도 초과)는 다시 시도해도 소용없어서(예: 무료 등급 그림 한도 0, 몇 시간 뒤 풀림) 바로 알려 줘요.
   //    기다리는 동안 상태 줄에 남은 시간을 보여 줘요.
   const AI_RETRY_WAITS = [3, 8, 15];
   async function fetchWithRetry(url, options) {
     let res;
     for (let attempt = 0; attempt <= AI_RETRY_WAITS.length; attempt++) {
       res = await fetch(url, options);
-      if (!(res.status === 503 || res.status === 429 || res.status === 500) || attempt === AI_RETRY_WAITS.length) return res;
+      if (!(res.status === 503 || res.status === 500) || attempt === AI_RETRY_WAITS.length) return res;
       const wait = AI_RETRY_WAITS[attempt];
       const log = document.getElementById('status-log');
       const keep = log ? log.innerText : '';
@@ -548,9 +611,13 @@ currentStoryBookObject = {
   function friendlyAiError(msg) {
     const m = String(msg || '');
     if (/high demand|overloaded|UNAVAILABLE|503|try again later/i.test(m)) return '지금 구글 AI를 쓰는 사람이 많아 붐벼요. 1~2분 뒤에 다시 눌러 주세요. (만들던 내용은 그대로 남아 있어요)';
+    if (/free_tier/i.test(m) && /limit:\s*0/i.test(m)) return '이 API 키는 무료 등급이라 그림 모델을 쓸 수 없어요(무료 한도 0장). Google AI Studio에서 이 키의 프로젝트에 결제를 연결하면 바로 그려져요. 글과 목소리는 무료 키로도 돼요.';
     if (/quota|RESOURCE_EXHAUSTED|429|rate/i.test(m)) return 'API 키의 사용 한도에 닿았어요. 잠시 뒤에 다시 하거나, Google AI Studio에서 한도·결제 설정을 확인해 주세요.';
     if (/API key not valid|API_KEY_INVALID|permission|PERMISSION_DENIED/i.test(m)) return 'API 키가 맞지 않아요. 키를 다시 복사해 넣어 주세요.';
     if (/JSON|Unexpected token|Unterminated/i.test(m)) return 'AI 답이 중간에 끊겼어요. 한 번 더 눌러 주세요.';
+    if (/IMAGE_SAFETY|SAFETY|PROHIBITED|blocked/i.test(m)) return `그림이 구글의 안전 기준에 걸려 그려지지 않았어요. 다시 그리기를 누르면 대부분 그려져요. (${m.slice(0, 80)})`;
+    if (/billing|FAILED_PRECONDITION|free tier|not available in your|paid/i.test(m)) return `그림 모델은 결제(유료 등급)가 연결된 API 키에서만 될 수 있어요. Google AI Studio의 결제 설정을 확인해 주세요. (${m.slice(0, 80)})`;
+    if (/not found|NOT_FOUND|404|is not supported/i.test(m)) return `그림 모델 이름이 바뀌었을 수 있어요. 이 문구를 Claude에게 보여 주세요: ${m.slice(0, 120)}`;
     return m;
   }
   window.friendlyAiError = friendlyAiError;
@@ -733,12 +800,16 @@ currentStoryBookObject = {
     }
 
     const data = await callImageModel(aiRoute, parts, '16:9');
-    if (data.error) throw new Error(data.error.message);
-    const resParts = data.candidates?.[0]?.content?.parts || [];
+    if (data.error) throw new Error(data.error.message || data.error.status || '그림 요청 오류');
+    const cand = data.candidates?.[0];
+    const resParts = cand?.content?.parts || [];
     for (const part of resParts) {
       if (part.inlineData && part.inlineData.data) return part.inlineData.data;
     }
-    throw new Error('이미지 없음');
+    // 🔎 그림이 오지 않은 까닭을 남겨요(안전 필터·글만 돌려줌 등) — 화면에 보여 원인을 찾기 쉽게
+    const why = data.promptFeedback?.blockReason || cand?.finishReason || '';
+    const said = resParts.map(pt => pt.text || '').join(' ').trim().slice(0, 120);
+    throw new Error(`그림이 오지 않았어요${why ? ` (${why})` : ''}${said ? ` — AI 답: ${said}` : ''}`);
   }
 
   function getLegacyUserIdentifier() {
@@ -1123,6 +1194,7 @@ currentStoryBookObject = {
     if (typeof window.updateMusicButtonLabel === 'function') window.updateMusicButtonLabel();
     if (typeof window.updateLibraryBookBar === 'function') window.updateLibraryBookBar();
     if (typeof window.renderClosingBox === 'function') window.renderClosingBox(book);
+    updateMissingImageButton();
   }
 
   function showPage(index) {

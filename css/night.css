@@ -96,3 +96,9 @@ html{background:#141733}
 .controls .ai-voice-btn{background:linear-gradient(100deg,#4a4f93,#2b3068)}
 .controls .reels-btn{background:linear-gradient(100deg,#a9853f,#7a5e25)}
 .controls .hud-btn{background:#12142b;border-color:#3b3f78}
+
+.controls .redraw-missing-btn{grid-column:1/-1;background:linear-gradient(100deg,#c9a45c,#a9853f);color:#1d2147;font-size:15px}
+
+/* 🎬 녹화 중에는 화면 전체를 다시 그리는 무거운 배경을 끔(크롬 탭이 멈추는 일 줄이기) */
+body:has(.rec-stage){background-attachment:scroll}
+body:has(.rec-stage) .app-shell{box-shadow:none}
