@@ -1,0 +1,98 @@
+/* 🌙 어른이 동화마을 — 밤 테마 (styles.css 위에 덮어쓰기)
+   색: 밤하늘 남색 + 은은한 금빛 + 종이 아이보리. 아이용 보라·분홍을 차분한 색으로 바꿉니다. */
+:root{
+  --night:#1d2147; --night2:#2b3068; --indigo:#3b3f78; --gold:#c9a45c; --gold2:#e6cf9a;
+  --paper:#fbf8f1; --ink:#262a40; --muted:#6b6f85; --line:#e6e0d2;
+}
+body{
+  color:var(--ink);
+  background:
+    radial-gradient(1px 1px at 12% 18%,rgba(255,255,255,.8) 50%,transparent 51%),
+    radial-gradient(1.5px 1.5px at 76% 9%,rgba(255,255,255,.7) 50%,transparent 51%),
+    radial-gradient(1px 1px at 58% 32%,rgba(255,255,255,.6) 50%,transparent 51%),
+    radial-gradient(1.2px 1.2px at 30% 72%,rgba(255,255,255,.5) 50%,transparent 51%),
+    radial-gradient(1px 1px at 90% 64%,rgba(255,255,255,.6) 50%,transparent 51%),
+    radial-gradient(circle at 85% 10%,rgba(230,207,154,.22) 0,transparent 22%),
+    linear-gradient(170deg,#141733 0%,#1d2147 45%,#2b2a55 100%);
+  background-attachment:fixed;
+  word-break:keep-all;
+}
+.app-shell{background:var(--paper);border-color:#d9d2bf;box-shadow:0 26px 70px rgba(5,8,30,.45)}
+.hero{background:linear-gradient(160deg,#1d2147,#2c3170 70%,#3a3a78);color:#f4efe3}
+.hero::after{background:rgba(230,207,154,.25)}
+.hero-copy h1{background:linear-gradient(100deg,#f5ecd6 10%,#e6cf9a 60%,#c9a45c);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-1px}
+.hero-copy p{color:#e6cf9a;font-weight:700}
+.muni-hero img{filter:drop-shadow(0 10px 24px rgba(230,207,154,.25))}
+.bgm-card{background:rgba(255,255,255,.07);border-color:rgba(230,207,154,.35)}
+.bgm-title{color:#f1e6c8} .bgm-song{color:#d9d4e8}
+.bgm-slider{accent-color:#c9a45c}
+.bgm-switch-btn{background:linear-gradient(135deg,#c9a45c,#a9853f);color:#1d2147}
+
+.tab-nav{grid-template-columns:repeat(3,1fr)}
+.tab-btn{color:#4b4f6b;border-color:#e3dccb;background:#fff}
+.tab-btn.active{background:linear-gradient(100deg,#2b3068,#3b3f78);box-shadow:0 7px 18px rgba(29,33,71,.25)}
+.section-card,.side-card,#library-view{background:#fff;border-color:#ebe5d6}
+.section-title{color:var(--indigo)}
+.section-title .num{background:#efe7d3;color:#7a5e25}
+.side-card h3{color:var(--indigo)}
+.side-cta{background:#f7f3ea;border-color:#ddd3bb;color:var(--indigo)}
+.btn-small,.library-play-all,.btn-load,.page-nav-btn{background:var(--indigo)}
+input:focus,select:focus,textarea:focus{border-color:#8a86c4;box-shadow:0 0 0 3px rgba(59,63,120,.12)}
+.helper-alert{color:var(--indigo)}
+textarea{width:100%;padding:12px 14px;border:1.5px solid #dfe3ec;border-radius:13px;font-size:15px;font-family:inherit;color:#283149;outline:none;resize:vertical;line-height:1.55}
+label small,.pick-label small{font-weight:600;color:#8a8ea3}
+
+/* 고르기 칩 */
+.pick-block{margin:4px 0 16px}
+.pick-label{font-weight:900;font-size:14.5px;color:#30344f;margin-bottom:8px}
+.pick-sub{font-size:12px;font-weight:800;color:#8a7a52;margin:8px 0 6px}
+.pick-chips{display:flex;flex-wrap:wrap;gap:7px}
+.pick-chip{border:1.5px solid #e2dccd;background:#fff;color:#3d4159;padding:9px 12px;border-radius:999px;font-weight:800;font-size:13.5px;cursor:pointer;transition:.15s}
+.pick-chip:hover{border-color:#b9b2d8;background:#faf8ff}
+.pick-chip.active{background:var(--indigo);border-color:var(--indigo);color:#fff;box-shadow:0 4px 12px rgba(59,63,120,.25)}
+.mood-chips .pick-chip.active{background:var(--mc,var(--indigo));border-color:var(--mc,var(--indigo))}
+
+.primary-btn{background:linear-gradient(100deg,#2b3068,#4a4f93 60%,#c9a45c);box-shadow:0 10px 24px rgba(29,33,71,.3)}
+#status-log{color:var(--indigo)}
+.ai-voice-option{border-color:#e6dcc0 !important;background:#fbf7ec !important}
+
+.go-lib-banner{background:linear-gradient(100deg,#f6efdc,#fbf8f1) !important;border-color:#e2d3a8 !important;color:#3b3f78 !important}
+.go-lib-go{background:var(--indigo) !important;color:#fff !important}
+
+.mood-badge{display:inline-block;margin:4px 0 8px;padding:5px 12px;border-radius:999px;background:#f1ecdf;color:#5a4a22;font-size:13px;font-weight:800}
+.page-num-badge{background:#e6cf9a;color:#3b2e10}
+.controls .read-btn{background:linear-gradient(100deg,#2b3068,#4a4f93)}
+.controls .save-btn{background:var(--indigo)} .controls .pdf-btn{background:#a9853f}
+.controls .bgm-btn{background:#f4efe1;color:#6b5626} .controls .loop-btn.active{background:var(--indigo)}
+.drama-control-box{background:#f8f5ec;border-color:#e6dcc0}
+.page-nav-bar{background:#f4f1e8}
+.footer{background:linear-gradient(90deg,#efe9da,#f7f3ea);color:#5d6077}
+
+/* 마지막 질문 */
+.closing-box{margin-top:14px;padding:16px;border-radius:16px;background:linear-gradient(150deg,#1d2147,#2f3474);color:#f4efe3}
+.closing-q{font-size:16.5px;font-weight:800;line-height:1.6;margin:0 0 10px;color:#f1e6c8}
+.closing-box textarea{background:rgba(255,255,255,.95)}
+.closing-actions{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.closing-actions button{border:0;border-radius:10px;padding:9px 14px;font-weight:900;cursor:pointer;background:#c9a45c;color:#1d2147}
+.closing-saved{font-size:12.5px;color:#e6cf9a}
+
+/* 입장 확인 · 위기 안내 */
+.guardian-box{background:var(--paper) !important}
+.guardian-box h2{color:var(--indigo) !important;line-height:1.4}
+.guardian-yes{background:var(--indigo) !important}
+.care-gate{z-index:10001}
+.care-call{display:block;margin:8px 0;padding:13px;border-radius:13px;background:var(--indigo);color:#fff;font-weight:900;font-size:16px;text-decoration:none}
+.care-call b{color:#e6cf9a;font-size:19px}
+.care-small{font-size:12.5px !important;color:#6b6f85 !important}
+.side-help{border-color:#e6dcc0;background:#fbf8f0}
+.side-help a{color:var(--indigo)}
+
+/* 아이용 화려한 버튼 색을 차분하게 */
+html{background:#141733}
+.tab-muni-lib:not(.active){background:#f7f1e2;color:#6b5626;border-color:#e2d3a8}
+.cloud-btn.primary{background:var(--indigo)}
+.install-app-btn{background:linear-gradient(135deg,#2b3068,#4a4f93)}
+.controls .rec-btn{background:linear-gradient(100deg,#7a3b4f,#a14f63)}
+.controls .ai-voice-btn{background:linear-gradient(100deg,#4a4f93,#2b3068)}
+.controls .reels-btn{background:linear-gradient(100deg,#a9853f,#7a5e25)}
+.controls .hud-btn{background:#12142b;border-color:#3b3f78}

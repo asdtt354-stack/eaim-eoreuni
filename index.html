@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>어른이 동화마을 — 오늘의 마음이 동화가 되는 곳</title>
+<meta name="description" content="오늘의 마음을 고르면 하루를 다독이는 짧은 어른 동화가 만들어져요. 20~40대 어른을 위한 오디오 동화.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link rel="stylesheet" href="./css/styles.css">
+<link rel="stylesheet" href="./css/mobile-fix.css">
+<link rel="stylesheet" href="./css/night.css">
+
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#1d2147">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="어른이 동화마을">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+</head>
+<body>
+
+<div class="english-translation-overlay" id="englishTranslationOverlay" aria-live="polite" aria-busy="true">
+  <div class="english-translation-card">
+    <div class="globe">🌙</div>
+    <h3 id="englishOverlayTitle">영어 동화로 바꾸는 중이에요</h3>
+    <p id="englishOverlayMessage">잠시만 기다려 주세요.</p>
+    <div class="english-loading-dots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<div class="browser-guide-overlay" id="kakaoGuideOverlay">
+  <div class="guide-card">
+    <div style="font-size:44px">🎧</div>
+    <h2>동화 낭독은 일반 브라우저에서 열어 주세요</h2>
+    <p>카카오톡 안에서는 음성 낭독이 제한되거나 같은 목소리로만 들릴 수 있어요.</p>
+    <div class="guide-steps" id="kakaoGuideSteps"></div>
+    <div class="guide-actions">
+      <button type="button" class="guide-primary" onclick="copyCurrentLink()">🔗 링크 복사</button>
+      <button type="button" class="guide-secondary" onclick="closeKakaoGuide()">일단 계속 보기</button>
+    </div>
+  </div>
+</div>
+
+<div class="install-guide-overlay" id="installGuideOverlay">
+  <div class="guide-card">
+    <div style="font-size:44px">📱</div>
+    <h2>어른이 동화마을을 앱처럼 저장하기</h2>
+    <div class="guide-steps" id="installGuideSteps"></div>
+    <div class="guide-actions">
+      <button type="button" class="guide-primary" id="nativeInstallBtn" onclick="triggerNativeInstall()">앱으로 설치</button>
+      <button type="button" class="guide-secondary" onclick="closeInstallGuide()">닫기</button>
+    </div>
+  </div>
+</div>
+<button type="button" class="install-app-btn" id="installAppBtn" onclick="openInstallGuide()">📱 앱으로 저장</button>
+
+<div class="app-shell">
+  <section class="hero">
+    <div class="hero-copy">
+      <h1>어른이<br>동화마을</h1>
+      <p>오늘의 마음이 동화가 되는 곳</p>
+    </div>
+    <!-- 🌙 안내 캐릭터 뮤인이: guide.png = 맞이하는 뮤인이(첫 화면·입장·명작 서가), guide-listen.png = 들려주는 뮤인이(녹화·캡컷 카드·불러오는 중) -->
+    <div class="muni-hero"><img src="./assets/guide.png" alt="어른이 동화마을 안내자 뮤인이"></div>
+    <div class="bgm-card">
+      <div class="bgm-title">🎵 배경음악</div>
+      <div class="bgm-song" id="bgmTitleText">밤의 오르골</div>
+      <div class="bgm-row">
+        <span id="bgmIcon">🎵</span>
+        <input type="range" class="bgm-slider" id="bgmVolumeSlider" min="0" max="1" step="0.05" value="0.42" oninput="changeBgmVolume(this.value)">
+        <button type="button" class="bgm-switch-btn" id="bgmSwitchTopBtn" onclick="toggleBgmSound()">BGM ON</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 📖 처음 온 사람도 무료 동화를 바로 찾도록 — 다시 읽는 명작 바로가기 -->
+  <button type="button" class="go-lib-banner" onclick="goMuniLibrary()">
+    <span class="go-lib-icon">📖</span>
+    <span class="go-lib-text">
+      <b>무료로 듣는 어른 동화</b>
+      <small>로그인·API 키 없이 바로 보고 들어요<span id="goLibCount"></span></small>
+    </span>
+    <span class="go-lib-go">다시 읽는 명작으로 →</span>
+  </button>
+
+  <nav class="tab-nav">
+    <button type="button" class="tab-btn active" id="tabCreateBtn" onclick="requireGuardian() && switchTab('create')">🌙 오늘의 동화 만들기</button>
+    <button type="button" class="tab-btn" id="tabLibraryBtn" onclick="requireGuardian() && switchTab('library')">📚 마음 서재</button>
+    <button type="button" class="tab-btn tab-muni-lib" id="tabMuniLibraryBtn" onclick="showMuniLibrary()">🏛️ 다시 읽는 명작</button>
+  </nav>
+
+  <main class="content-wrap">
+    <div id="create-view">
+      <div class="create-grid">
+        <div class="stack">
+          <section class="section-card">
+            <div class="settings-head">
+              <h2 class="section-title" style="margin:0"><span class="num">1</span> 🔑 API 키와 서재 이름</h2>
+              <div class="user-actions">
+                <span class="user-status" id="apiStatus">💾 저장됨</span>
+                <button type="button" class="btn-small" onclick="saveUserSession()">설정 저장</button>
+                <button type="button" class="btn-clear" onclick="clearUserSession()">초기화</button>
+              </div>
+            </div>
+            <div class="cloud-auth-box">
+              <div class="cloud-auth-row">
+                <div class="cloud-auth-copy">
+                  <b>☁️ 마음 서재 (클라우드)</b>
+                  Google로 로그인하면 휴대폰과 PC에서 같은 서재를 볼 수 있어요.
+                </div>
+                <div class="cloud-auth-actions">
+                  <button type="button" id="googleLoginBtn" class="cloud-btn primary" onclick="loginEAIMKids()">Google로 로그인</button>
+                  <div id="cloudUserBox" class="cloud-user">
+                    <img id="cloudUserPhoto" class="cloud-avatar" alt="">
+                    <span id="cloudUserName" style="font-size:12px;font-weight:900;color:#3b3f78"></span>
+                  </div>
+                  <button type="button" id="cloudSyncBtn" class="cloud-btn sync" style="display:none" onclick="syncLocalLibraryToCloud()">☁️ 이 기기 서재 동기화</button>
+                  <button type="button" id="googleLogoutBtn" class="cloud-btn" style="display:none" onclick="logoutEAIMKids()">로그아웃</button>
+                </div>
+              </div>
+              <div id="cloudAuthStatus" class="cloud-status">로그인하지 않아도 이 기기에는 저장돼요.</div>
+            </div>
+
+            <div id="trialStatus" class="trial-status" style="display:none"></div>
+            <label for="apiKey">API Key</label>
+            <input type="password" id="apiKey" placeholder="Google AI Studio API 키를 넣어 주세요" oninput="saveUserSession()">
+            <div class="helper-text">🔒 키는 이 기기에만 저장돼요. 무료 키는 입력 내용이 구글 서비스 개선에 쓰일 수 있어요.</div>
+            <label for="authorName">✍️ 내 서재 이름</label>
+            <input type="text" id="authorName" placeholder="예: 밤산책, 퇴근길 작가" oninput="saveUserSession()">
+            <div class="helper-text">실명이 아니어도 괜찮아요. 이 이름으로 서재가 나뉘어요.</div>
+          </section>
+
+          <section class="section-card">
+            <h2 class="section-title"><span class="num">2</span> 🌙 오늘은 어떤 동화가 필요할까요?</h2>
+
+            <div class="pick-block">
+              <div class="pick-label">👤 어떤 주인공의 이야기를 읽고 싶나요? <small>(고르지 않아도 돼요)</small></div>
+              <div class="pick-chips" id="heroChips">
+                <button type="button" class="pick-chip" data-hero="young" onclick="pickHero(this)">🌱 시작하는 어른</button>
+                <button type="button" class="pick-chip" data-hero="mid" onclick="pickHero(this)">🌿 한창인 어른</button>
+                <button type="button" class="pick-chip" data-hero="deep" onclick="pickHero(this)">🌳 깊어지는 어른</button>
+              </div>
+            </div>
+
+            <div class="pick-block">
+              <div class="pick-label">🎨 어떤 결의 이야기가 좋을까요?</div>
+              <div class="pick-chips" id="genreChips">
+                <button type="button" class="pick-chip active" data-genre="comfort" onclick="pickAdultGenre(this)">🕯️ 따뜻한 위로</button>
+                <button type="button" class="pick-chip" data-genre="humor" onclick="pickAdultGenre(this)">😄 유머</button>
+                <button type="button" class="pick-chip" data-genre="fantasy" onclick="pickAdultGenre(this)">🌌 판타지 모험</button>
+                <button type="button" class="pick-chip" data-genre="daily" onclick="pickAdultGenre(this)">☕ 잔잔한 일상</button>
+                <button type="button" class="pick-chip" data-genre="fable" onclick="pickAdultGenre(this)">🦉 반전 우화</button>
+              </div>
+              <select id="storyGenre" hidden onchange="handleGenreChange(this.value)">
+                <option value="comfort" selected>따뜻한 위로</option>
+                <option value="humor">유머</option>
+                <option value="fantasy">판타지 모험</option>
+                <option value="daily">잔잔한 일상</option>
+                <option value="fable">반전 우화</option>
+              </select>
+            </div>
+
+            <div class="pick-block">
+              <div class="pick-label">💭 오늘의 마음은 어떤가요? <small>(하나 골라 주세요)</small></div>
+              <div class="pick-sub">다독이고 싶은 마음</div>
+              <div class="pick-chips mood-chips" id="moodChipsHeavy"></div>
+              <div class="pick-sub">나누고 싶은 마음</div>
+              <div class="pick-chips mood-chips" id="moodChipsBright"></div>
+            </div>
+
+            <div class="pick-block">
+              <div class="pick-label">📍 어떤 자리의 이야기일까요?</div>
+              <div class="pick-chips" id="placeChips"></div>
+            </div>
+
+            <div class="pick-block">
+              <label for="dayNote">✏️ 오늘 하루를 한두 줄 적어도 좋아요 <small>(선택)</small></label>
+              <textarea id="dayNote" rows="2" maxlength="200" placeholder="예: 회의에서 하고 싶은 말을 못 했다. 퇴근길 하늘이 예뻤다."></textarea>
+              <div class="helper-text">🔒 적은 글은 동화를 만드는 데만 쓰고 <b>저장하지 않아요.</b> 실명이나 회사 이름은 적지 않아도 돼요.</div>
+            </div>
+
+            <div class="input-grid" style="margin-top:4px">
+              <div class="input-group">
+                <label for="character">🏷️ 주인공 이름 <small>(선택)</small></label>
+                <input type="text" id="character" maxlength="12" placeholder="비우면 동화가 지어 줘요">
+              </div>
+              <div class="input-group">
+                <label for="storyLength">⏱ 동화 길이</label>
+                <select id="storyLength">
+                  <option value="3" selected>3분 · 4페이지</option>
+                  <option value="5">5분 · 6페이지</option>
+                  <option value="7">7분 · 8페이지</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <label class="ai-voice-option">
+            <input type="checkbox" id="aiVoiceToggle">
+            <span>🎙️ <b>AI 성우 목소리로 만들기</b> <small>내 API 키로 결제 · <span id="aiVoiceCost">약 60원</span> · 한 번 만들면 다시 들을 때 무료</small><br>
+            <small class="ai-voice-sub">무료체험 동화에는 AI 성우 목소리가 기본으로 들어가요.</small></span>
+          </label>
+          <button type="button" class="primary-btn" id="generateBtn" onclick="generateStoryAndImages()">🌙 오늘의 동화 만들기</button>
+          <div id="status-log"></div>
+
+          <div id="book-container">
+            <div class="library-book-bar" id="libraryBookBar" style="display:none">
+              <span>🏛️ 다시 읽는 명작이에요</span>
+              <button type="button" class="ml-bar-video" onclick="openLibraryVideo()">🎬 영상 보기</button>
+              <button type="button" onclick="showMuniLibrary()">📚 다른 동화 보기</button>
+            </div>
+            <div class="story-title" id="story-main-title"></div>
+            <div class="mood-badge" id="moodBadge" style="display:none"></div>
+            <div class="ai-voice-badge" id="aiVoiceBadge" style="display:none">🎙️ AI 성우 목소리로 읽어요</div>
+            <!-- 영어 낭독은 어른이 동화마을에서 아직 쓰지 않아요(숨김). 기능은 그대로 남겨 둠 -->
+            <div class="language-control-box" id="languageControlBox" style="display:none">
+              <span class="language-label">🌐 읽기 언어</span>
+              <button type="button" class="lang-btn active" id="langKoBtn" onclick="switchStoryLanguage('ko')">한국어</button>
+              <button type="button" class="lang-btn" id="langPreschoolBtn" onclick="switchStoryLanguage('en-preschool')">쉬운 영어</button>
+              <button type="button" class="lang-btn" id="langChildBtn" onclick="switchStoryLanguage('en-child')">영어</button>
+              <button type="button" class="lang-btn" id="showTranslationBtn" style="display:none" onclick="toggleKoreanTranslationView()">해석 함께 보기</button>
+              <span class="translation-status" id="translationStatus">한국어 원문</span>
+            </div>
+            <div class="book-page-wrapper" id="story-pages-wrapper"></div>
+            <div class="page-nav-bar">
+              <button type="button" class="page-nav-btn" id="prevPageBtn" onclick="goToPrevPage()">◀ 이전</button>
+              <span class="page-indicator" id="pageIndicator">1 / 1</span>
+              <button type="button" class="page-nav-btn" id="nextPageBtn" onclick="goToNextPage()">다음 ▶</button>
+            </div>
+            <div class="drama-control-box">
+              <label for="actingStyle">🎙️ 낭독 분위기</label>
+              <select id="actingStyle" onchange="handleActingStyleChange()">
+                <option value="bedtime_calm" selected>🌙 차분한 밤 낭독</option>
+                <option value="dynamic_theater">🎭 생동감 있는 낭독</option>
+              </select>
+            </div>
+            <div id="closingBox" class="closing-box" style="display:none"></div>
+          </div>
+
+          <div class="controls" id="controlPanel">
+            <button type="button" class="read-btn" id="readBtn" onclick="startContinuousReading()">🎧 동화 듣기</button>
+            <button type="button" class="bgm-btn" id="bgmControlBtn" onclick="toggleBgmSound()">🎵 배경음악: ON</button>
+            <button type="button" class="loop-btn" id="loopBtn" onclick="toggleRepeatMode()">🔁 반복 재생: OFF</button>
+            <button type="button" onclick="pauseVoice()">⏸ 일시정지</button>
+            <button type="button" onclick="resumeVoice()">▶ 이어듣기</button>
+            <button type="button" class="stop" onclick="stopVoice()">⏹ 정지</button>
+            <button type="button" class="save-btn" onclick="saveCurrentStoryToDB()">💾 마음 서재에 저장</button>
+            <button type="button" class="pdf-btn" onclick="exportToPDF()">📄 PDF 내려받기</button>
+            <button type="button" class="ai-voice-btn" id="aiVoiceAddBtn" style="display:none" onclick="addAiVoiceToCurrentStory(this)">🎙️ AI 성우 목소리 입히기</button>
+            <button type="button" class="rec-btn" onclick="openStoryRecorder()">🎬 동화 녹화하기</button>
+            <button type="button" class="hud-btn" onclick="openHudMode()">🪞 증강 동화로 보기 (투명 아크릴)</button>
+            <button type="button" class="reels-btn" onclick="openReelsMaker()">📱 세로 릴스·쇼츠 만들기</button>
+            <button type="button" class="capcut-btn creator-only publish-btn" onclick="openLibraryPublish()">📚 다시 읽는 명작에 올리기 (제작자)</button>
+            <button type="button" class="capcut-btn creator-only" id="customBgmBtn" onclick="openCreatorMusicShelf()">🎵 이 동화의 배경음악 고르기 (제작자)</button>
+            <button type="button" class="capcut-btn creator-only" onclick="exportCapCutKit(this)">🎞️ 캡컷용 재료 내려받기 (제작자)</button>
+          </div>
+        </div>
+
+        <aside class="sidebar stack">
+          <section class="side-card">
+            <h3>🌙 이렇게 써요</h3>
+            <ul class="tip-list">
+              <li>마음과 이야기 결만 골라도 동화가 만들어져요.</li>
+              <li>하루 이야기를 적으면 그대로 옮기지 않고, 동화 속 장면으로 바꿔 들려줘요.</li>
+              <li>동화 끝의 질문에 한 줄 답을 남기면 서재에 함께 저장돼요.</li>
+              <li>🎬 녹화는 PC 크롬·엣지에서 영상 파일로 저장돼요. 휴대폰은 화면 녹화 기능과 함께 쓰세요.</li>
+            </ul>
+          </section>
+          <section class="side-card">
+            <h3>📚 마음 서재</h3>
+            <p class="side-note">만든 동화와 그날 고른 마음, 남긴 한 줄이 모여요.</p>
+            <button class="side-cta" type="button" onclick="requireGuardian() && switchTab('library')">마음 서재 보기 →</button>
+          </section>
+          <section class="side-card">
+            <h3>🛏 잠들기 전에</h3>
+            <p class="side-note"><b>차분한 밤 낭독</b>을 고르면 조금 더 느리고 낮은 목소리로 들려줘요.</p>
+          </section>
+          <section class="side-card side-help">
+            <h3>☎️ 마음이 많이 힘들 때</h3>
+            <p class="side-note">동화보다 사람의 목소리가 필요할 때가 있어요.<br>자살예방상담전화 <a href="tel:109"><b>109</b></a> · 정신건강위기상담전화 <a href="tel:15770199"><b>1577-0199</b></a> (24시간)</p>
+          </section>
+        </aside>
+      </div>
+    </div>
+
+    <div id="library-view">
+      <div class="library-header">
+        <span id="libraryTitleLabel" style="font-weight:900;color:#3b3f78">📚 마음 서재</span>
+        <button type="button" class="library-play-all" onclick="playAllBooksSequentially()">▶ 서재 연속 재생</button>
+      </div>
+      <div id="library-list"><p style="text-align:center;color:#94a3b8;padding:20px">저장된 동화가 없어요.</p></div>
+    </div>
+    <div id="muni-library-view" style="display:none">
+      <div class="ml-hero">
+        <img src="./assets/guide.png" alt="안내자">
+        <div>
+          <h2>🏛️ 다시 읽는 명작</h2>
+          <p>오래된 명작을 어른의 시선으로 다시 쓴 동화예요. <b>누구나 무료로</b> 보고 들을 수 있어요. 로그인도, API 키도 필요 없어요.</p>
+          <button type="button" class="ml-share ml-share-lib" onclick="copyLibraryLink('', this)">🔗 명작 서가 주소 복사</button>
+        </div>
+      </div>
+      <div id="muniLibraryList" class="ml-grid"></div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span>🌙 오늘의 마음을 동화로 — 어른이 동화마을</span>
+    <span>EAIM · Eoreuni Story Village v1.0</span>
+  </footer>
+  <p class="eaim-copy" style="font-size:.68rem;color:#888;text-align:center;margin:10px 0 14px;line-height:1.6;word-break:keep-all">© 2026 박성애 · EAIM · 무단 복제·상업적 이용 금지 · <a href="https://eaim.kr/#copyright" target="_blank" rel="noopener" style="color:inherit">이용 안내</a></p>
+</div>
+
+<!-- 위기 신호가 보이면 동화 대신 나오는 화면 (공통규칙 10-5 안전장치) -->
+<div id="careGate" class="guardian-gate care-gate" style="display:none">
+  <div class="guardian-box">
+    <div style="font-size:46px">🕯️</div>
+    <h2>지금 이야기는<br>동화보다 사람이 먼저 들어야 할 이야기 같아요</h2>
+    <p>혼자 견디지 않아도 돼요. 지금 바로 이야기를 들어 줄 사람이 있어요.</p>
+    <a class="care-call" href="tel:109">📞 자살예방상담전화 <b>109</b></a>
+    <a class="care-call" href="tel:15770199">📞 정신건강위기상담전화 <b>1577-0199</b></a>
+    <p class="care-small">24시간 연결돼요. 가까운 사람에게 "오늘 좀 힘들어"라고 말해 보는 것도 좋아요.<br>적어 주신 글은 저장하지 않았어요.</p>
+    <button type="button" class="guardian-no" onclick="closeCareGate()">닫기</button>
+  </div>
+</div>
+
+<script src="./js/adult-story.js"></script>
+<script src="./js/language.js"></script>
+<script type="module" src="./js/firebase-sync.js"></script>
+<script src="./js/app.js"></script>
+<script src="./js/ai-voice.js"></script>
+<script src="./js/recorder.js"></script>
+<script src="./js/creator-config.js"></script>
+<script src="./js/creator.js"></script>
+<script src="./js/creator-music.js"></script>
+<script src="./js/muni-library.js"></script>
+<script src="./js/hud.js"></script>
+<script src="./js/eaim-auto-recorder.js"></script>
+<script src="./js/reels.js"></script>
+
+<script src="./js/pwa.js"></script>
+
+<div id="guardianGate" class="guardian-gate" style="display:none">
+  <div class="guardian-box">
+    <img src="./assets/guide.png" alt="안내자">
+    <h2>어서 오세요, 어른이 동화마을이에요</h2>
+    <p>이곳은 <b>만 18세 이상 어른</b>을 위한 동화 공간이에요.<br>오늘의 마음을 고르면 짧은 동화가 만들어져요.</p>
+    <ul>
+      <li>하루 이야기는 동화를 만드는 데만 쓰고 저장하지 않아요.</li>
+      <li>동화 만들기에는 Google AI의 생성형 AI를 써요.</li>
+    </ul>
+    <button type="button" class="guardian-yes" onclick="confirmGuardian()">네, 만 18세 이상이에요</button>
+    <button type="button" class="guardian-lib" onclick="skipGuardianToLibrary()">📖 무료 명작만 들을래요</button>
+    <button type="button" class="guardian-no" onclick="notGuardian()">아니에요</button>
+    <p class="guardian-child-msg" id="guardianChildMsg" style="display:none">🙂 여기는 어른을 위한 곳이에요.<br>어린이 동화는 뮤니의 동화마을에서 만나요!</p>
+  </div>
+</div>
+<div class="creator-badge creator-only">🛠 제작자 모드</div>
+</body>
+</html>

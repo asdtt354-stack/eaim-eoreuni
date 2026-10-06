@@ -1,0 +1,73 @@
+// ⚠️ eaim-kids Firestore 규칙 전체입니다 (뮤니의 동화마을 + 어른이 동화마을).
+// 콘솔 규칙을 이 파일 내용 "전체"로 바꿔 넣으세요. 동화마을 부분(users, trials)은 그대로 들어 있어요.
+// 어른이 동화마을은 eoreuniUsers, eoreuniTrials 두 칸만 새로 더했어요.
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // EAIM Kids: 로그인 사용자는 자신의 UID 아래 모든 동화/페이지/이미지 조각만 접근 가능
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // 🎁 무료체험 이용권 (api/fairytale-trial.js 와 짝)
+    // - 처음 만들 때: 글 1회 사용, 그림 0장, 목소리 0페이지, 4페이지, 만든 시각 = 서버 시각
+    // - 그 뒤로는 숫자를 "올리기"만 가능, 되돌리기·지우기 불가
+    // - 글 최대 3회(동화 1 + 재시도 1 + 영어 번역 1), 그림 최대 5장, 목소리 최대 5페이지, 시작 후 30분 안에만
+    match /trials/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      allow create: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['createdAt', 'textUsed', 'imagesUsed', 'ttsUsed', 'pages'])
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.textUsed == 1
+        && request.resource.data.imagesUsed == 0
+        && request.resource.data.ttsUsed == 0
+        && request.resource.data.pages == 4;
+
+      allow update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['textUsed', 'imagesUsed', 'ttsUsed'])
+        && request.resource.data.textUsed >= resource.data.textUsed
+        && request.resource.data.imagesUsed >= resource.data.imagesUsed
+        && request.resource.data.ttsUsed >= resource.data.ttsUsed
+        && request.resource.data.textUsed <= 3
+        && request.resource.data.imagesUsed <= 5
+        && request.resource.data.ttsUsed <= 5
+        && request.time < resource.data.createdAt + duration.value(30, 'm');
+
+      allow delete: if false;
+    }
+  
+    // 🌙 어른이 동화마을 — 마음 서재: 로그인한 본인 것만 읽고 쓰기
+    match /eoreuniUsers/{userId}/{document=**} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // 🌙 어른이 동화마을 무료체험 이용권 (api/fairytale-trial.js 와 짝) — 동화마을 trials 와 같은 규칙, 따로 셈
+    match /eoreuniTrials/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      allow create: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['createdAt', 'textUsed', 'imagesUsed', 'ttsUsed', 'pages'])
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.textUsed == 1
+        && request.resource.data.imagesUsed == 0
+        && request.resource.data.ttsUsed == 0
+        && request.resource.data.pages == 4;
+
+      allow update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['textUsed', 'imagesUsed', 'ttsUsed'])
+        && request.resource.data.textUsed >= resource.data.textUsed
+        && request.resource.data.imagesUsed >= resource.data.imagesUsed
+        && request.resource.data.ttsUsed >= resource.data.ttsUsed
+        && request.resource.data.textUsed <= 3
+        && request.resource.data.imagesUsed <= 5
+        && request.resource.data.ttsUsed <= 5
+        && request.time < resource.data.createdAt + duration.value(30, 'm');
+
+      allow delete: if false;
+    }
+  }
+}

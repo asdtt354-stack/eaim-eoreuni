@@ -1,0 +1,30 @@
+/* 📱 휴대폰에서 동화 화면이 오른쪽으로 잘리는 문제 고침 (2026-09-28)
+   원인: 긴 선택 상자(낭독 연기 스타일 등)·언어 버튼 줄의 "최소 너비" 때문에 칸이 화면보다 넓어짐 */
+.create-grid > *, .stack, .stack > *, #book-container, .book-page-wrapper { min-width: 0; max-width: 100%; }
+select, input, textarea { max-width: 100%; min-width: 0; }
+.language-control-box, .library-book-bar, .page-nav-bar { flex-wrap: wrap; }
+.language-control-box > * { min-width: 0; }
+.page-img { max-width: 100%; height: auto; }
+.story-title { overflow-wrap: anywhere; word-break: keep-all; }
+.page-text, .page-overlay-box { overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .language-control-box button { padding: 9px 12px; font-size: 14px; }
+  .page-nav-bar { gap: 8px; }
+  .page-nav-bar button { padding: 11px 14px; font-size: 15px; }
+}
+
+/* 동화 아래 버튼판: 앱이 켤 때 'flex'로 켜서 버튼이 한 줄로 끼어 밀려나던 것을 원래 설계대로 칸(grid)으로 */
+#controlPanel[style*="flex"] { display: grid !important; }
+.controls button { min-width: 0; white-space: normal; word-break: keep-all; }
+
+/* 📖 동화 글이 그림을 덮고 잘리던 문제: 그림은 위에 온전히, 글은 그 아래에 모두 보이게 */
+.page-item { aspect-ratio: auto; }
+/* 그림은 원래 모양(가로 16:9 등) 그대로 — 네모 칸에 억지로 채우면서 양옆이 잘리던 것 고침 */
+.page-item .page-img { aspect-ratio: auto; height: auto; object-fit: contain; }
+.page-overlay-box {
+  position: static; max-height: none; overflow: visible;
+  padding: 16px 18px 18px;
+  background: linear-gradient(180deg, #2a2140, #1d1630);
+}
+
+.rec-warn{display:block;margin-top:8px;padding:8px 10px;border-radius:10px;background:#fff4e5;color:#9a5b00;font-size:13px;font-weight:700;line-height:1.5}
