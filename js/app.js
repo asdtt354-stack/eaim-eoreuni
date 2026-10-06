@@ -419,8 +419,9 @@ currentStoryBookObject = {
 
     } catch (err) {
       const statusLog = document.getElementById('status-log');
-      if (statusLog) statusLog.innerText = `⚠️ 오류: ${err.message}`;
-      alert(`⚠️ 오류가 발생했습니다: ${err.message}`);
+      const nice = friendlyAiError(err.message);
+      if (statusLog) statusLog.innerText = `⚠️ ${nice}`;
+      alert(`⚠️ ${nice}`);
     } finally {
       const btn = document.getElementById('generateBtn');
       if (btn) btn.disabled = false;
@@ -523,16 +524,36 @@ currentStoryBookObject = {
   const AI_MODELS = { text: 'gemini-flash-latest', image: 'gemini-3.1-flash-image' };
   let trialConfigCache = null;
 
+  // 🔁 구글 AI가 붐빌 때(503·429) 기다렸다가 다시 시도 — 3초 → 8초 → 15초 (총 4번)
+  //    기다리는 동안 상태 줄에 남은 시간을 보여 줘요.
+  const AI_RETRY_WAITS = [3, 8, 15];
   async function fetchWithRetry(url, options) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const res = await fetch(url, options);
-      if ((res.status === 503 || res.status === 429) && attempt === 0) {
-        await new Promise(r => setTimeout(r, 1500));
-        continue;
+    let res;
+    for (let attempt = 0; attempt <= AI_RETRY_WAITS.length; attempt++) {
+      res = await fetch(url, options);
+      if (!(res.status === 503 || res.status === 429 || res.status === 500) || attempt === AI_RETRY_WAITS.length) return res;
+      const wait = AI_RETRY_WAITS[attempt];
+      const log = document.getElementById('status-log');
+      const keep = log ? log.innerText : '';
+      for (let s = wait; s > 0; s--) {
+        if (log) log.innerText = `⏳ 지금 구글 AI가 붐벼요. ${s}초 뒤에 다시 시도할게요... (${attempt + 1}/${AI_RETRY_WAITS.length})`;
+        await new Promise(r => setTimeout(r, 1000));
       }
-      return res;
+      if (log) log.innerText = keep;
     }
+    return res;
   }
+
+  // 영어 오류 문구를 쉬운 말로
+  function friendlyAiError(msg) {
+    const m = String(msg || '');
+    if (/high demand|overloaded|UNAVAILABLE|503|try again later/i.test(m)) return '지금 구글 AI를 쓰는 사람이 많아 붐벼요. 1~2분 뒤에 다시 눌러 주세요. (만들던 내용은 그대로 남아 있어요)';
+    if (/quota|RESOURCE_EXHAUSTED|429|rate/i.test(m)) return 'API 키의 사용 한도에 닿았어요. 잠시 뒤에 다시 하거나, Google AI Studio에서 한도·결제 설정을 확인해 주세요.';
+    if (/API key not valid|API_KEY_INVALID|permission|PERMISSION_DENIED/i.test(m)) return 'API 키가 맞지 않아요. 키를 다시 복사해 넣어 주세요.';
+    if (/JSON|Unexpected token|Unterminated/i.test(m)) return 'AI 답이 중간에 끊겼어요. 한 번 더 눌러 주세요.';
+    return m;
+  }
+  window.friendlyAiError = friendlyAiError;
 
   async function callTrialServer(payload) {
     const idToken = await window.EAIMCloud?.getIdToken?.();

@@ -92,14 +92,14 @@ async function useTicket(uid, token, kind) {
 
 async function callGemini(model, body) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     const r = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.FAIRYTALE_TRIAL_KEY },
       body: JSON.stringify(body)
     });
-    if ((r.status === 503 || r.status === 429) && attempt === 0) {
-      await new Promise(res => setTimeout(res, 1500));
+    if ((r.status === 503 || r.status === 429) && attempt < 2) {
+      await new Promise(res => setTimeout(res, attempt === 0 ? 1500 : 3500));
       continue;
     }
     return { status: r.status, data: await r.json().catch(() => ({})) };
